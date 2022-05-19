@@ -3,11 +3,13 @@ package handlers
 import (
 	"api-gin/structs"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func HandlerReq() {
 	r := gin.Default()
+	r.Use(cors.Default())
 	r.GET("/", HomePage)
 
 	//Tambah User Baru

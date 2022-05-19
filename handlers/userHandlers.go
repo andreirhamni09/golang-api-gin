@@ -5,6 +5,7 @@ import (
 	"api-gin/structs"
 	"encoding/json"
 	"io/ioutil"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -163,6 +164,12 @@ func LoginUser(c *gin.Context) {
 	var userLogin structs.UsersLogin
 	res := structs.Results{Code: 200, Data: dbUser, Message: "Gagal Login"}
 	json.Unmarshal(payloads, &userLogin)
+
+	if err := c.ShouldBind(&userLogin); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	connections.DB.Where("username = ?", &userLogin.Username).Find(&dbUser)
 
 	if CekPassword(userLogin.Password, dbUser.Password) {
