@@ -60,7 +60,7 @@ func HandlerReq() {
 	//Hapus Product Berdasarkan Id
 	r.DELETE("/product/:id", DeletProductById)
 
-	r.Run(":9000")
+	r.Run("167.17273.163:9091")
 }
 
 func HomePage(c *gin.Context) {

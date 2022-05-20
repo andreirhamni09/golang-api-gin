@@ -14,7 +14,7 @@ var (
 )
 
 func Connection() {
-	DB, Err = gorm.Open("mysql", "andre:0s7cosUcjNWmOHbF@(localhost)/andre?charset=utf8&parseTime=True&loc=Local")
+	DB, Err = gorm.Open("mysql", "andre:0s7cosUcjNWmOHbF@/andre?charset=utf8&parseTime=True&loc=Local")
 	if Err != nil {
 		fmt.Println("Gagal Koneksi", Err)
 	} else {
