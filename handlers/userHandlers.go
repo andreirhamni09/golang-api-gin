@@ -12,12 +12,22 @@ import (
 )
 
 func CreateUsers(c *gin.Context) {
+
+	var dbUsers structs.Users
+
+	if err := c.ShouldBindJSON(&dbUsers); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    400,
+			"data":    nil,
+			"message": "Lengkapi Data",
+		})
+		return
+	}
+
 	body := c.Request.Body
 	payloads, _ := ioutil.ReadAll(body)
 
-	var dbUsers structs.Users
 	json.Unmarshal(payloads, &dbUsers)
-
 	res := structs.Results{Code: 500, Data: dbUsers, Message: "Unknown Error"}
 
 	switch dbUsers.Role {
@@ -37,12 +47,14 @@ func CreateUsers(c *gin.Context) {
 		dbUsers.Password = genPass
 
 		if err := connections.DB.Create(&dbUsers).Error; err != nil {
-			ginDetail := gin.H{"code": 400, "data": dbUsers, "message": err.Error()}
-			ReturnResult(c, 400, ginDetail)
+			res.Data = dbUsers
+			res.Code = 400
+			res.Message = err.Error()
+		} else {
+			res.Data = dbUsers
+			res.Code = 200
+			res.Message = "Add new user successfully"
 		}
-		res.Data = dbUsers
-		res.Code = 200
-		res.Message = "Add new user successfully"
 	}
 	ginDetail := gin.H{"code": res.Code, "data": res.Data, "message": res.Message}
 	ReturnResult(c, res.Code, ginDetail)
@@ -157,19 +169,18 @@ func DeleteUserById(c *gin.Context) {
 }
 
 func LoginUser(c *gin.Context) {
-	body := c.Request.Body
-	payloads, _ := ioutil.ReadAll(body)
-
 	var dbUser structs.Users
 	var userLogin structs.UsersLogin
-	res := structs.Results{Code: 200, Data: dbUser, Message: "Gagal Login"}
-	json.Unmarshal(payloads, &userLogin)
-
-	if err := c.ShouldBind(&userLogin); err != nil {
+	if err := c.ShouldBindJSON(&userLogin); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	body := c.Request.Body
+	payloads, _ := ioutil.ReadAll(body)
+	json.Unmarshal(payloads, &userLogin)
+
+	res := structs.Results{Code: 200, Data: dbUser, Message: "Gagal Login"}
 	connections.DB.Where("username = ?", &userLogin.Username).Find(&dbUser)
 
 	if CekPassword(userLogin.Password, dbUser.Password) {
@@ -180,3 +191,21 @@ func LoginUser(c *gin.Context) {
 	ginDetail := gin.H{"code": res.Code, "data": res.Data, "message": res.Message}
 	ReturnResult(c, res.Code, ginDetail)
 }
+
+/* func LoginUser(c *gin.Context) {
+	// body := c.Request.Body
+	// payloads, _ := ioutil.ReadAll(body)
+
+	var userLogin structs.UsersLogin
+	if err := c.ShouldBindJSON(&userLogin); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if userLogin.Username != "manu" || userLogin.Password != "123" {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "you are logged in"})
+} */
