@@ -4,6 +4,10 @@ import (
 	"api-gin/structs"
 
 	"github.com/gin-gonic/gin"
+	
+	"log"
+	"os"
+	"github.com/joho/godotenv"
 )
 
 func CORS() gin.HandlerFunc {
@@ -60,14 +64,31 @@ func HandlerReq() {
 	//Hapus Product Berdasarkan Id
 	r.DELETE("/product/:id", DeletProductById)
 
+	r.GET("/generatetoken", GenerateToken)
+
+	r.GET("/loadenv", LoadEnv)
+
 	r.Run(":9091")
+}
+
+func LoadEnv(c *gin.Context) {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Some error occured. Err: %s", err)
+	}
+
+	conn := os.Getenv("DB_CONNECTION")
+
+	host := os.Getenv("DB_HOST")
+
+	c.JSON(200, gin.H{"Connection" : conn, "Host" : host})
 }
 
 func HomePage(c *gin.Context) {
 	homeRes := structs.Results{}
 	homeRes.Code = 200
 	homeRes.Data = nil
-	homeRes.Message = "Ini Halaman ome"
+	homeRes.Message = "Ini Halaman Home"
 
 	ginDetail := gin.H{"code": homeRes.Code, "data": homeRes.Data, "message": homeRes.Message}
 	c.JSON(homeRes.Code, ginDetail)

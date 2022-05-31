@@ -7,9 +7,55 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-
 	"github.com/gin-gonic/gin"
+	"time"
+	jwt "github.com/dgrijalva/jwt-go"
 )
+
+func GenerateToken(c *gin.Context){	
+	claims := &structs.AuthCustomClaims{
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 48).Unix(),
+			IssuedAt:  time.Now().Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	//encoded string
+	t, err := token.SignedString([]byte("mantap"))
+	if err != nil {
+		panic(err)
+	}
+	res := structs.Results{Code: 200, Data: "Data Tidak Ditemukan", Message: "Gagal Login"}
+	
+	ginDetail := gin.H{"code": res.Code, "data": t, "message": res.Message}
+	ReturnResult(c, res.Code, ginDetail)
+}
+
+func LoginUser(c *gin.Context) {
+	var dbUser structs.Users
+	var userLogin structs.UsersLogin
+	if err := c.ShouldBindJSON(&userLogin); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Halah"})
+		return
+	}
+
+	body := c.Request.Body
+	payloads, _ := ioutil.ReadAll(body)
+	json.Unmarshal(payloads, &userLogin)
+
+	res := structs.Results{Code: 200, Data: "Data Tidak Ditemukan", Message: "Gagal Login"}
+	connections.DB.Where("username = ?", &userLogin.Username).Find(&dbUser)
+
+	if CekPassword(userLogin.Password, dbUser.Password) {
+		res.Data = dbUser
+		res.Code = 200
+		res.Message = "Berhasil Login"
+	}
+	ginDetail := gin.H{"code": res.Code, "data": res.Data, "message": res.Message}
+	ReturnResult(c, res.Code, ginDetail)
+}
 
 func CreateUsers(c *gin.Context) {
 
@@ -166,30 +212,6 @@ func DeleteUserById(c *gin.Context) {
 
 	ReturnResult(c, res.Code, ginDetail)
 
-}
-
-func LoginUser(c *gin.Context) {
-	var dbUser structs.Users
-	var userLogin structs.UsersLogin
-	if err := c.ShouldBindJSON(&userLogin); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	body := c.Request.Body
-	payloads, _ := ioutil.ReadAll(body)
-	json.Unmarshal(payloads, &userLogin)
-
-	res := structs.Results{Code: 200, Data: dbUser, Message: "Gagal Login"}
-	connections.DB.Where("username = ?", &userLogin.Username).Find(&dbUser)
-
-	if CekPassword(userLogin.Password, dbUser.Password) {
-		res.Data = dbUser
-		res.Code = 200
-		res.Message = "Berhasil Login"
-	}
-	ginDetail := gin.H{"code": res.Code, "data": res.Data, "message": res.Message}
-	ReturnResult(c, res.Code, ginDetail)
 }
 
 /* func LoginUser(c *gin.Context) {

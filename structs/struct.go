@@ -1,5 +1,9 @@
 package structs
 
+import (	
+	jwt "github.com/dgrijalva/jwt-go"
+)
+
 type Users struct {
 	ID       int    `json:"id"`
 	Username string `form:"username" json:"username" xml:"username"  binding:"required"`
@@ -8,6 +12,10 @@ type Users struct {
 	Phone    string `form:"phone" json:"phone" xml:"phone"  binding:"required"`
 	Role     string `form:"role" json:"role" xml:"role"  binding:"required"`
 	Status   bool   `form:"status" json:"status" xml:"status"  binding:"required"`
+}
+
+type AuthCustomClaims struct {
+	jwt.StandardClaims
 }
 
 type UsersLogin struct {
