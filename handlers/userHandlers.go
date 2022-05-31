@@ -8,30 +8,8 @@ import (
 	"net/http"
 	"strconv"
 	"github.com/gin-gonic/gin"
-	"time"
-	jwt "github.com/dgrijalva/jwt-go"
+	"api-gin/functions"
 )
-
-func GenerateToken(c *gin.Context){	
-	claims := &structs.AuthCustomClaims{
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 48).Unix(),
-			IssuedAt:  time.Now().Unix(),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	//encoded string
-	t, err := token.SignedString([]byte("mantap"))
-	if err != nil {
-		panic(err)
-	}
-	res := structs.Results{Code: 200, Data: "Data Tidak Ditemukan", Message: "Gagal Login"}
-	
-	ginDetail := gin.H{"code": res.Code, "data": t, "message": res.Message}
-	ReturnResult(c, res.Code, ginDetail)
-}
 
 func LoginUser(c *gin.Context) {
 	var dbUser structs.Users
@@ -48,13 +26,13 @@ func LoginUser(c *gin.Context) {
 	res := structs.Results{Code: 200, Data: "Data Tidak Ditemukan", Message: "Gagal Login"}
 	connections.DB.Where("username = ?", &userLogin.Username).Find(&dbUser)
 
-	if CekPassword(userLogin.Password, dbUser.Password) {
+	if functions.CekPassword(userLogin.Password, dbUser.Password) {
 		res.Data = dbUser
 		res.Code = 200
 		res.Message = "Berhasil Login"
 	}
 	ginDetail := gin.H{"code": res.Code, "data": res.Data, "message": res.Message}
-	ReturnResult(c, res.Code, ginDetail)
+	functions.ReturnResult(c, res.Code, ginDetail)
 }
 
 func CreateUsers(c *gin.Context) {
@@ -88,8 +66,8 @@ func CreateUsers(c *gin.Context) {
 	}
 
 	if dbUsers.Role != "invalid" {
-		genPass, err := EncriptPassword(dbUsers.Password)
-		ReturnCheckError(c, err)
+		genPass, err := functions.EncriptPassword(dbUsers.Password)
+		functions.ReturnCheckError(c, err)
 		dbUsers.Password = genPass
 
 		if err := connections.DB.Create(&dbUsers).Error; err != nil {
@@ -103,7 +81,7 @@ func CreateUsers(c *gin.Context) {
 		}
 	}
 	ginDetail := gin.H{"code": res.Code, "data": res.Data, "message": res.Message}
-	ReturnResult(c, res.Code, ginDetail)
+	functions.ReturnResult(c, res.Code, ginDetail)
 }
 
 func GetUsersLimit(c *gin.Context) {
@@ -121,13 +99,13 @@ func GetUsersLimit(c *gin.Context) {
 	dbUsers := []structs.Users{}
 
 	if err := connections.DB.Limit(limit).Offset(offset).Find(&dbUsers).Error; err != nil {
-		ReturnCheckError(c, err)
+		functions.ReturnCheckError(c, err)
 	}
 
 	res := structs.Results{Code: 200, Data: dbUsers, Message: "User has successfully retrieve"}
 	ginDetail := gin.H{"code": res.Code, "data": res.Data, "message": res.Message}
 
-	ReturnResult(c, res.Code, ginDetail)
+	functions.ReturnResult(c, res.Code, ginDetail)
 }
 
 func GetUserId(c *gin.Context) {
@@ -136,13 +114,13 @@ func GetUserId(c *gin.Context) {
 	dbUsers := structs.Users{}
 
 	if err := connections.DB.First(&dbUsers, id).Error; err != nil {
-		ReturnCheckError(c, err)
+		functions.ReturnCheckError(c, err)
 	}
 	res := structs.Results{Code: 200, Data: dbUsers, Message: "Users Ditemukan"}
 
 	ginDetail := gin.H{"code": res.Code, "data": res.Data, "message": res.Message}
 
-	ReturnResult(c, res.Code, ginDetail)
+	functions.ReturnResult(c, res.Code, ginDetail)
 }
 
 func UpdateUserById(c *gin.Context) {
@@ -156,7 +134,7 @@ func UpdateUserById(c *gin.Context) {
 	res := structs.Results{Code: 500, Data: dbUsers, Message: "Unknown Error"}
 
 	if err := connections.DB.First(&dbUsers, id).Error; err != nil {
-		ReturnCheckError(c, err)
+		functions.ReturnCheckError(c, err)
 	}
 	json.Unmarshal(payloads, &dbUsers)
 
@@ -172,11 +150,11 @@ func UpdateUserById(c *gin.Context) {
 	}
 
 	if dbUsers.Role != "invalid" {
-		genPass, err := EncriptPassword(dbUsers.Password)
-		ReturnCheckError(c, err)
+		genPass, err := functions.EncriptPassword(dbUsers.Password)
+		functions.ReturnCheckError(c, err)
 		dbUsers.Password = genPass
 		if err := connections.DB.Model(&dbUsers).Updates(&dbUsers).Error; err != nil {
-			ReturnCheckError(c, err)
+			functions.ReturnCheckError(c, err)
 		}
 		if !dbUsers.Status {
 			connections.DB.Model(&dbUsers).Updates(map[string]interface{}{"status": false})
@@ -185,7 +163,7 @@ func UpdateUserById(c *gin.Context) {
 		res.Code = 200
 		res.Message = "Update user successfully"
 		ginDetail := gin.H{"code": res.Code, "data": res.Data, "message": res.Message}
-		ReturnResult(c, res.Code, ginDetail)
+		functions.ReturnResult(c, res.Code, ginDetail)
 	}
 
 }
@@ -196,12 +174,12 @@ func DeleteUserById(c *gin.Context) {
 	dbUsers := structs.Users{}
 
 	if err := connections.DB.First(&dbUsers, id).Error; err != nil {
-		ReturnCheckError(c, err)
+		functions.ReturnCheckError(c, err)
 	}
 	res := structs.Results{Code: 200, Data: dbUsers, Message: "Users Ditemukan"}
 
 	if err := connections.DB.Delete(&dbUsers).Error; err != nil {
-		ReturnCheckError(c, err)
+		functions.ReturnCheckError(c, err)
 	}
 
 	res.Code = 200
@@ -210,7 +188,7 @@ func DeleteUserById(c *gin.Context) {
 
 	ginDetail := gin.H{"code": res.Code, "data": res.Data, "message": res.Message}
 
-	ReturnResult(c, res.Code, ginDetail)
+	functions.ReturnResult(c, res.Code, ginDetail)
 
 }
 

@@ -8,6 +8,8 @@ import (
 	"log"
 	"os"
 	"github.com/joho/godotenv"
+	
+	"api-gin/functions"
 )
 
 func CORS() gin.HandlerFunc {
@@ -64,7 +66,7 @@ func HandlerReq() {
 	//Hapus Product Berdasarkan Id
 	r.DELETE("/product/:id", DeletProductById)
 
-	r.GET("/generatetoken", GenerateToken)
+	r.GET("/generatetoken", functions.TampilkanToken)
 
 	r.GET("/loadenv", LoadEnv)
 
